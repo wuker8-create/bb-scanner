@@ -12,68 +12,93 @@
   <title>BB Scanner</title>
   <style>
     :root {
-      --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
-      --border: rgba(255,255,255,0.07); --text: #f0f0f5; --muted: #6b6b80;
-      --green: #22c77a; --green-dim: rgba(34,199,122,0.12);
-      --amber: #f0a030; --amber-dim: rgba(240,160,48,0.12);
-      --red: #e84545; --red-dim: rgba(232,69,69,0.10);
-      --blue: #4f8ef7; --blue-dim: rgba(79,142,247,0.12);
-      --radius: 12px; --radius-sm: 8px;
+      --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c27;
+      --border:rgba(255,255,255,0.07);--text:#f0f0f5;--muted:#6b6b80;
+      --green:#22c77a;--green-dim:rgba(34,199,122,0.12);
+      --amber:#f0a030;--amber-dim:rgba(240,160,48,0.12);
+      --red:#e84545;--red-dim:rgba(232,69,69,0.10);
+      --blue:#4f8ef7;--blue-dim:rgba(79,142,247,0.12);
+      --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);
+      --radius:12px;--radius-sm:8px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; }
-    .app { display: flex; flex-direction: column; min-height: 100vh; max-width: 480px; margin: 0 auto; padding: env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,20px); }
-    .header { padding: 20px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
-    .header-left h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-    .header-left p { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .hright { display: flex; align-items: center; gap: 10px; }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: all 0.3s; }
-    .status-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 16px 14px; }
-    .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 8px; text-align: center; }
-    .stat-val { font-size: 20px; font-weight: 700; line-height: 1; }
-    .stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
-    .stat-val.green { color: var(--green); }
-    .stat-val.amber { color: var(--amber); }
-    .section { padding: 0 16px 14px; }
-    .section-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
-    .params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .param { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-    .param label { font-size: 11px; color: var(--muted); }
-    .param input { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 600; width: 100%; outline: none; -webkit-appearance: none; }
-    .btn-row { display: flex; gap: 8px; padding: 0 16px 14px; }
-    .btn { flex: 1; padding: 14px; border-radius: var(--radius); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
-    .btn:active { transform: scale(0.97); }
-    .btn-start { background: var(--green); color: #000; }
-    .btn-stop { background: var(--red-dim); color: var(--red); border: 0.5px solid var(--red); }
-    .btn-notify { background: var(--blue-dim); color: var(--blue); border: 0.5px solid rgba(79,142,247,0.3); flex: 0 0 auto; padding: 14px 16px; font-size: 16px; }
-    .btn-notify.granted { background: var(--green-dim); color: var(--green); border-color: rgba(34,199,122,0.3); }
-    .divider { height: 0.5px; background: var(--border); margin: 0 16px 14px; }
-    .alerts-wrap { padding: 0 16px; }
-    .alerts-list { display: flex; flex-direction: column; gap: 8px; max-height: 45vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
-    .alert-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease; border-left: 3px solid var(--green); }
-    @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
-    .alert-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--green-dim); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-    .alert-body { flex: 1; min-width: 0; }
-    .alert-coin { font-size: 14px; font-weight: 700; }
-    .alert-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .alert-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-    .empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
-    .empty-icon { font-size: 32px; margin-bottom: 10px; }
-    .coins-section { padding: 10px 16px 14px; }
-    .coins-grid { display: flex; flex-wrap: wrap; gap: 5px; max-height: 120px; overflow-y: auto; }
-    .chip { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 20px; border: 0.5px solid var(--border); color: var(--muted); background: var(--surface); transition: all 0.2s; }
-    .chip.bull { color: var(--green); background: var(--green-dim); border-color: rgba(34,199,122,0.25); }
-    .chip.touch { color: #000; background: var(--green); border-color: var(--green); animation: pop 0.4s ease; }
-    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
-    .progress-bar { height: 2px; background: var(--surface2); border-radius: 2px; margin: 0 16px 14px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--green); border-radius: 2px; width: 0%; transition: width 0.3s; }
-    .log-section { padding: 0 16px 20px; }
-    .log-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; max-height: 70px; overflow-y: auto; }
-    .log-line { font-size: 11px; color: var(--muted); font-family: 'SF Mono', monospace; line-height: 1.7; }
-    .log-line.hi { color: var(--green); }
-    .scan-info { font-size: 11px; color: var(--muted); text-align: right; padding: 0 16px 8px; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;}
+    .app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;padding:env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,20px);}
+    .header{padding:20px 20px 12px;display:flex;align-items:center;justify-content:space-between;}
+    .header-left h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+    .header-left p{font-size:12px;color:var(--muted);margin-top:2px;}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:var(--muted);transition:all 0.3s;}
+    .status-dot.active{background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 16px 14px;}
+    .stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 8px;text-align:center;}
+    .stat-val{font-size:20px;font-weight:700;line-height:1;}
+    .stat-label{font-size:10px;color:var(--muted);margin-top:3px;}
+    .stat-val.green{color:var(--green);}
+    .stat-val.amber{color:var(--amber);}
+
+    /* Filter tabs */
+    .filter-wrap{padding:0 16px 14px;}
+    .filter-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+    .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+    .ftab{padding:7px 14px;border-radius:20px;border:0.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;-webkit-tap-highlight-color:transparent;}
+    .ftab:active{transform:scale(0.96);}
+    .ftab.active{background:var(--green-dim);color:var(--green);border-color:rgba(34,199,122,0.35);}
+    .ftab.active.amber{background:var(--amber-dim);color:var(--amber);border-color:rgba(240,160,48,0.35);}
+    .ftab.active.purple{background:var(--purple-dim);color:var(--purple);border-color:rgba(167,139,250,0.35);}
+    .ftab.active.blue{background:var(--blue-dim);color:var(--blue);border-color:rgba(79,142,247,0.35);}
+    .filter-hint{font-size:11px;color:var(--muted);margin-top:8px;}
+
+    /* Top-N selector */
+    .topn-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+    .topn-label{font-size:12px;color:var(--muted);}
+    .topn-select{background:var(--surface);border:0.5px solid var(--border);color:var(--text);font-size:13px;font-weight:600;padding:5px 10px;border-radius:var(--radius-sm);outline:none;}
+
+    .section{padding:0 16px 14px;}
+    .section-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;}
+    .params{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .param{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;flex-direction:column;gap:4px;}
+    .param label{font-size:11px;color:var(--muted);}
+    .param input{background:transparent;border:none;color:var(--text);font-size:16px;font-weight:600;width:100%;outline:none;-webkit-appearance:none;}
+
+    .btn-row{display:flex;gap:8px;padding:0 16px 14px;}
+    .btn{flex:1;padding:14px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.1s;-webkit-tap-highlight-color:transparent;}
+    .btn:active{transform:scale(0.97);}
+    .btn-start{background:var(--green);color:#000;}
+    .btn-stop{background:var(--red-dim);color:var(--red);border:0.5px solid var(--red);}
+    .btn-notify{background:var(--blue-dim);color:var(--blue);border:0.5px solid rgba(79,142,247,0.3);flex:0 0 auto;padding:14px 16px;font-size:16px;}
+    .btn-notify.granted{background:var(--green-dim);color:var(--green);border-color:rgba(34,199,122,0.3);}
+
+    .divider{height:0.5px;background:var(--border);margin:0 16px 14px;}
+    .progress-bar{height:2px;background:var(--surface2);border-radius:2px;margin:0 16px 14px;overflow:hidden;}
+    .progress-fill{height:100%;background:var(--green);border-radius:2px;width:0%;transition:width 0.3s;}
+
+    .alerts-wrap{padding:0 16px;}
+    .alerts-list{display:flex;flex-direction:column;gap:8px;max-height:40vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+    .alert-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;animation:slideIn 0.3s ease;border-left:3px solid var(--green);}
+    @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+    .alert-icon{width:34px;height:34px;border-radius:50%;background:var(--green-dim);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .alert-body{flex:1;min-width:0;}
+    .alert-coin{font-size:14px;font-weight:700;}
+    .alert-detail{font-size:11px;color:var(--muted);margin-top:2px;}
+    .alert-time{font-size:11px;color:var(--muted);flex-shrink:0;}
+    .empty{text-align:center;padding:28px 20px;color:var(--muted);font-size:13px;line-height:1.6;}
+    .empty-icon{font-size:30px;margin-bottom:8px;}
+
+    .coins-section{padding:10px 16px 14px;}
+    .coins-grid{display:flex;flex-wrap:wrap;gap:5px;max-height:110px;overflow-y:auto;}
+    .chip{font-size:11px;font-weight:600;padding:4px 8px;border-radius:20px;border:0.5px solid var(--border);color:var(--muted);background:var(--surface);transition:all 0.2s;}
+    .chip.bull{color:var(--green);background:var(--green-dim);border-color:rgba(34,199,122,0.25);}
+    .chip.touch{color:#000;background:var(--green);border-color:var(--green);animation:pop 0.4s ease;}
+    @keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+
+    .scan-info{font-size:11px;color:var(--muted);text-align:right;padding:0 16px 6px;}
+    .log-section{padding:0 16px 20px;}
+    .log-box{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;max-height:70px;overflow-y:auto;}
+    .log-line{font-size:11px;color:var(--muted);font-family:'SF Mono',monospace;line-height:1.7;}
+    .log-line.hi{color:var(--green);}
+    .log-line.warn{color:var(--amber);}
   </style>
 </head>
 <body>
@@ -83,9 +108,7 @@
       <h1>BB Scanner</h1>
       <p id="subtitle">Bybit · 15m · Bollinger Middle</p>
     </div>
-    <div class="hright">
-      <div class="status-dot" id="dot"></div>
-    </div>
+    <div class="status-dot" id="dot"></div>
   </div>
 
   <div class="stats">
@@ -95,8 +118,29 @@
     <div class="stat"><div class="stat-val" id="st-scan" style="font-size:13px;padding-top:4px;">—</div><div class="stat-label">Скан</div></div>
   </div>
 
+  <!-- Filter -->
+  <div class="filter-wrap">
+    <div class="filter-label">Фильтр монет</div>
+    <div class="filter-tabs">
+      <button class="ftab active" data-mode="gainers" onclick="setMode('gainers',this)">🚀 Топ роста</button>
+      <button class="ftab amber" data-mode="losers" onclick="setMode('losers',this)">📉 Топ падения</button>
+      <button class="ftab blue" data-mode="volume" onclick="setMode('volume',this)">💹 Топ объёма</button>
+      <button class="ftab purple" data-mode="fixed" onclick="setMode('fixed',this)">📋 Фикс список</button>
+    </div>
+    <div class="topn-row">
+      <span class="topn-label">Количество монет:</span>
+      <select class="topn-select" id="topn-select">
+        <option value="20">20</option>
+        <option value="30">30</option>
+        <option value="50" selected>50</option>
+        <option value="80">80</option>
+      </select>
+    </div>
+    <div class="filter-hint" id="filter-hint">Загружает топ-50 монет по росту за 24ч с Bybit перед каждым сканом</div>
+  </div>
+
   <div class="section">
-    <div class="section-title">Параметры</div>
+    <div class="section-title">Параметры BB</div>
     <div class="params">
       <div class="param"><label>Период BB</label><input type="number" id="p-bb" value="20" inputmode="numeric"></div>
       <div class="param"><label>Откл. σ</label><input type="number" id="p-std" value="2" step="0.5" inputmode="decimal"></div>
@@ -111,13 +155,12 @@
   </div>
 
   <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-
   <div class="divider"></div>
 
   <div class="alerts-wrap">
     <div class="section-title" style="padding:0 0 10px;">Алерты</div>
     <div class="alerts-list" id="alerts-list">
-      <div class="empty"><div class="empty-icon">📡</div>Нажми «Запустить» — сканнер проверит монеты и покажет касания средней BB</div>
+      <div class="empty"><div class="empty-icon">📡</div>Нажми «Запустить» — сканнер загрузит топ монет и покажет касания средней BB</div>
     </div>
   </div>
 
@@ -136,61 +179,104 @@
 </div>
 
 <script>
-// Top-80 Bybit USDT spot pairs by volume
-const COINS = [
+// Fallback fixed list
+const FIXED_COINS = [
   'BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','DOGEUSDT','ADAUSDT','TRXUSDT',
   'AVAXUSDT','LINKUSDT','DOTUSDT','MATICUSDT','LTCUSDT','SHIBUSDT','UNIUSDT','ATOMUSDT',
   'ETCUSDT','XLMUSDT','NEARUSDT','ALGOUSDT','FILUSDT','ICPUSDT','APTUSDT','ARBUSDT',
   'OPUSDT','INJUSDT','RUNEUSDT','SUIUSDT','SEIUSDT','TIAUSDT','WIFUSDT','JUPUSDT',
-  'PENDLEUSDT','PYTHUSDT','STXUSDT','AAVEUSDT','MKRUSDT','LDOUSDT','SNXUSDT','CRVUSDT',
-  'COMPUSDT','YFIUSDT','GRTUSDT','FTMUSDT','SANDUSDT','MANAUSDT','AXSUSDT','APEUSDT',
-  'GMTUSDT','FLOWUSDT','CHZUSDT','GALAUSDT','IMXUSDT','LOOMUSDT','RLCUSDT','SKLUSDT',
-  'COTIUSDT','IOTAUSDT','KAVAUSDT','ONEUSDT','ZILUSDT','HBARUSDT','VETUSDT','XTZUSDT',
-  'EOSUSDT','ARUSDT','QNTUSDT','EGLDUSDT','TUSDT','XMRUSDT','DASHUSDT','ZECUSDT',
-  'WAVESUSDT','ONTUSDT','NEOUSDT','IOSTUSDT','FETUSDT','RENDERUSDT','WLDUSDT','TONUSDT'
+  'PENDLEUSDT','PYTHUSDT','STXUSDT','AAVEUSDT','MKRUSDT','LDOUSDT','FETUSDT','RENDERUSDT',
+  'WLDUSDT','TONUSDT','HBARUSDT','VETUSDT','GRTUSDT','FTMUSDT','SANDUSDT','AXSUSDT','APEUSDT','IMXUSDT'
 ];
 
+let currentMode = 'gainers';
 let running = false;
 let timer = null;
 let alertCount = 0;
 let prevTouching = new Set();
 let scanBatch = 0;
 
-function log(msg, hi = false) {
+const HINTS = {
+  gainers: 'Загружает топ монет по росту за 24ч с Bybit перед каждым сканом',
+  losers:  'Загружает топ монет по падению за 24ч — откаты к средней BB',
+  volume:  'Загружает топ монет по объёму торгов за 24ч',
+  fixed:   'Фиксированный список из 50 популярных монет'
+};
+
+function setMode(mode, el) {
+  currentMode = mode;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('filter-hint').textContent = HINTS[mode];
+}
+
+function log(msg, cls = '') {
   const t = new Date().toLocaleTimeString('ru-RU');
   const line = document.createElement('div');
-  line.className = 'log-line' + (hi ? ' hi' : '');
+  line.className = 'log-line' + (cls ? ' ' + cls : '');
   line.textContent = `[${t}] ${msg}`;
   const box = document.getElementById('log-box');
   box.insertBefore(line, box.firstChild);
-  while (box.children.length > 25) box.removeChild(box.lastChild);
+  while (box.children.length > 30) box.removeChild(box.lastChild);
 }
 
-// Bybit V5 API — klines
+// Fetch top coins from Bybit tickers
+async function fetchTopCoins() {
+  const topN = +document.getElementById('topn-select').value || 50;
+  try {
+    const r = await fetch('https://api.bybit.com/v5/market/tickers?category=spot');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (data.retCode !== 0) throw new Error(data.retMsg);
+
+    let tickers = data.result.list.filter(t =>
+      t.symbol.endsWith('USDT') &&
+      !t.symbol.includes('USDC') &&
+      parseFloat(t.turnover24h) > 500000
+    );
+
+    if (currentMode === 'gainers') {
+      tickers.sort((a, b) => parseFloat(b.price24hPcnt) - parseFloat(a.price24hPcnt));
+      tickers = tickers.filter(t => parseFloat(t.price24hPcnt) > 0);
+    } else if (currentMode === 'losers') {
+      tickers.sort((a, b) => parseFloat(a.price24hPcnt) - parseFloat(b.price24hPcnt));
+      tickers = tickers.filter(t => parseFloat(t.price24hPcnt) < 0);
+    } else if (currentMode === 'volume') {
+      tickers.sort((a, b) => parseFloat(b.turnover24h) - parseFloat(a.turnover24h));
+    }
+
+    const coins = tickers.slice(0, topN).map(t => t.symbol);
+    log(`Загружено ${coins.length} монет (${currentMode}, топ-${topN})`, 'warn');
+    return coins;
+  } catch(e) {
+    log('Ошибка загрузки тикеров: ' + e.message + ' — используем фикс список', 'warn');
+    return FIXED_COINS.slice(0, topN);
+  }
+}
+
 async function fetchKlines(symbol) {
   const url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=${symbol}&interval=15&limit=70`;
   const r = await fetch(url);
   if (!r.ok) throw new Error(r.status);
   const data = await r.json();
   if (data.retCode !== 0) throw new Error(data.retMsg);
-  // Bybit returns newest first → reverse
   return data.result.list.reverse().map(c => parseFloat(c[4]));
 }
 
 function calcEMA(closes, period) {
   if (closes.length < period) return null;
   const k = 2 / (period + 1);
-  let ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
+  let ema = closes.slice(0, period).reduce((a,b) => a+b, 0) / period;
+  for (let i = period; i < closes.length; i++) ema = closes[i]*k + ema*(1-k);
   return ema;
 }
 
 function calcBB(closes, period, std) {
   if (closes.length < period) return null;
   const sl = closes.slice(-period);
-  const sma = sl.reduce((a, b) => a + b, 0) / period;
-  const sigma = Math.sqrt(sl.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period);
-  return { upper: sma + std * sigma, middle: sma, lower: sma - std * sigma };
+  const sma = sl.reduce((a,b) => a+b, 0) / period;
+  const sigma = Math.sqrt(sl.reduce((a,b) => a+Math.pow(b-sma,2), 0) / period);
+  return { upper: sma+std*sigma, middle: sma, lower: sma-std*sigma };
 }
 
 async function scanCoin(symbol) {
@@ -204,30 +290,29 @@ async function scanCoin(symbol) {
     const bb = calcBB(closes, period, std);
     const ema = calcEMA(closes, emaPer);
     if (!bb || !ema) return null;
-    const price = closes[closes.length - 1];
+    const price = closes[closes.length-1];
     const recent = closes.slice(-10);
-    const bull = price > ema && recent[recent.length - 1] > recent[0];
-    const touch = Math.abs(price - bb.middle) / bb.middle * 100 <= touchPct;
-    return { symbol, price, bb, bull, touch };
-  } catch (e) {
-    return null;
-  }
+    const bull = price > ema && recent[recent.length-1] > recent[0];
+    const touch = Math.abs(price-bb.middle)/bb.middle*100 <= touchPct;
+    const change24 = ((price - closes[0]) / closes[0] * 100);
+    return { symbol, price, bb, bull, touch, change24 };
+  } catch(e) { return null; }
 }
 
-function addAlert(symbol, price, middle) {
+function addAlert(r) {
   const list = document.getElementById('alerts-list');
   const empty = list.querySelector('.empty');
   if (empty) empty.remove();
   const t = new Date().toLocaleTimeString('ru-RU');
+  const name = r.symbol.replace('USDT','');
+  const pct = ((r.price-r.bb.middle)/r.bb.middle*100).toFixed(3);
   const card = document.createElement('div');
   card.className = 'alert-card';
-  const name = symbol.replace('USDT', '');
-  const pct = ((price - middle) / middle * 100).toFixed(3);
   card.innerHTML = `
     <div class="alert-icon">📊</div>
     <div class="alert-body">
-      <div class="alert-coin">${name}/USDT</div>
-      <div class="alert-detail">Цена ${price.toPrecision(6)} · BB средняя ${middle.toPrecision(6)} · Δ ${pct}%</div>
+      <div class="alert-coin">${name}/USDT <span style="font-size:11px;color:var(--green);font-weight:400">+${r.change24.toFixed(1)}% 24ч</span></div>
+      <div class="alert-detail">Цена ${r.price.toPrecision(6)} · BB mid ${r.bb.middle.toPrecision(6)} · Δ ${pct}%</div>
     </div>
     <div class="alert-time">${t}</div>`;
   list.insertBefore(card, list.firstChild);
@@ -236,8 +321,8 @@ function addAlert(symbol, price, middle) {
   document.getElementById('st-alerts').textContent = alertCount;
   if (Notification.permission === 'granted') {
     const n = new Notification(`📊 ${name} — касание BB`, {
-      body: `Бычий тренд ✓  Цена: ${price.toPrecision(6)}`,
-      icon: '/icon-192.svg', badge: '/icon-192.svg', tag: symbol, renotify: true
+      body: `${r.change24 >= 0 ? '+' : ''}${r.change24.toFixed(1)}% за 24ч · Цена: ${r.price.toPrecision(6)}`,
+      icon: '/icon-192.svg', badge: '/icon-192.svg', tag: r.symbol, renotify: true
     });
     setTimeout(() => n.close(), 8000);
   }
@@ -252,31 +337,44 @@ function updateGrid(results) {
     total++;
     const chip = document.createElement('span');
     chip.className = 'chip' + (r.touch ? ' touch' : r.bull ? ' bull' : '');
-    chip.textContent = r.symbol.replace('USDT', '');
-    chip.title = `${r.price.toPrecision(6)} | BB mid: ${r.bb.middle.toPrecision(6)}`;
+    const sign = r.change24 >= 0 ? '+' : '';
+    chip.textContent = r.symbol.replace('USDT','') + ' ' + sign + r.change24.toFixed(1) + '%';
+    chip.title = `Цена: ${r.price.toPrecision(6)} | BB mid: ${r.bb.middle.toPrecision(6)}`;
     grid.appendChild(chip);
     if (r.bull) bull++;
   });
   document.getElementById('st-bull').textContent = bull;
   document.getElementById('st-total').textContent = total;
-  document.getElementById('st-scan').textContent = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+  document.getElementById('st-scan').textContent = new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
 }
 
-// Batch scan with progress to avoid rate limits
 async function runScan() {
   scanBatch++;
-  log(`Скан #${scanBatch} — ${COINS.length} монет...`);
+  // Step 1: fetch dynamic coin list
+  let coins;
+  if (currentMode === 'fixed') {
+    const topN = +document.getElementById('topn-select').value || 50;
+    coins = FIXED_COINS.slice(0, topN);
+    log(`Фикс список: ${coins.length} монет`);
+  } else {
+    log(`Загрузка топа (${currentMode})...`, 'warn');
+    coins = await fetchTopCoins();
+  }
+
+  log(`Скан #${scanBatch} — ${coins.length} монет...`);
+  document.getElementById('scan-info').textContent = `Топ-${coins.length} · ${currentMode}`;
+
+  // Step 2: scan in batches
   const BATCH = 10;
   const allResults = [];
-  for (let i = 0; i < COINS.length; i += BATCH) {
+  for (let i = 0; i < coins.length; i += BATCH) {
     if (!running) break;
-    const batch = COINS.slice(i, i + BATCH);
+    const batch = coins.slice(i, i+BATCH);
     const res = await Promise.all(batch.map(scanCoin));
     allResults.push(...res);
-    const pct = Math.round((i + BATCH) / COINS.length * 100);
-    document.getElementById('progress').style.width = Math.min(pct, 100) + '%';
-    document.getElementById('scan-info').textContent = `Проверено ${Math.min(i+BATCH, COINS.length)} / ${COINS.length}`;
-    if (i + BATCH < COINS.length) await new Promise(r => setTimeout(r, 300));
+    const pct = Math.round((i+BATCH)/coins.length*100);
+    document.getElementById('progress').style.width = Math.min(pct,100)+'%';
+    if (i+BATCH < coins.length) await new Promise(r => setTimeout(r, 300));
   }
   document.getElementById('progress').style.width = '0%';
   updateGrid(allResults);
@@ -286,8 +384,8 @@ async function runScan() {
     if (!r) return;
     if (r.bull && r.touch) {
       if (!prevTouching.has(r.symbol)) {
-        addAlert(r.symbol, r.price, r.bb.middle);
-        log(`⚡ АЛЕРТ: ${r.symbol.replace('USDT','')} касание BB`, true);
+        addAlert(r);
+        log(`⚡ АЛЕРТ: ${r.symbol.replace('USDT','')} +${r.change24.toFixed(1)}% · касание BB`, 'hi');
         prevTouching.add(r.symbol);
         newAlerts++;
       }
@@ -297,7 +395,7 @@ async function runScan() {
   });
 
   const bullCount = allResults.filter(r => r && r.bull).length;
-  log(`Готово: ${allResults.filter(Boolean).length} ок, бычьих ${bullCount}, алертов ${newAlerts}`);
+  log(`Готово: ${allResults.filter(Boolean).length} монет, бычьих ${bullCount}, алертов ${newAlerts}`);
 }
 
 function toggleScanner() {
@@ -306,9 +404,9 @@ function toggleScanner() {
     document.getElementById('dot').classList.add('active');
     document.getElementById('main-btn').textContent = '⏹ Остановить';
     document.getElementById('main-btn').className = 'btn btn-stop';
-    log('Сканнер запущен · Bybit spot 15m');
+    log('Сканнер запущен');
     runScan();
-    timer = setInterval(runScan, 90000); // 90s interval — bybit rate limit friendly
+    timer = setInterval(runScan, 90000);
   } else {
     running = false;
     clearInterval(timer);
@@ -334,8 +432,7 @@ if ('Notification' in window && Notification.permission === 'granted') {
   document.getElementById('notif-btn').textContent = '✅';
   document.getElementById('notif-btn').className = 'btn btn-notify granted';
 }
-
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script>
 </body>
 </html>
