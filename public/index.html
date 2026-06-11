@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BB Scanner">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.svg">
+  <title>BB Scanner</title>
+  <style>
+    :root {
+      --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c27;
+      --border: rgba(255,255,255,0.07); --text: #f0f0f5; --muted: #6b6b80;
+      --green: #22c77a; --green-dim: rgba(34,199,122,0.12);
+      --amber: #f0a030; --amber-dim: rgba(240,160,48,0.12);
+      --red: #e84545; --red-dim: rgba(232,69,69,0.10);
+      --blue: #4f8ef7; --blue-dim: rgba(79,142,247,0.12);
+      --radius: 12px; --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; }
+    .app { display: flex; flex-direction: column; min-height: 100vh; max-width: 480px; margin: 0 auto; padding: env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,20px); }
+    .header { padding: 20px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
+    .header-left h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-left p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .hright { display: flex; align-items: center; gap: 10px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: all 0.3s; }
+    .status-dot.active { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 16px 14px; }
+    .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 8px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 10px; color: var(--muted); margin-top: 3px; }
+    .stat-val.green { color: var(--green); }
+    .stat-val.amber { color: var(--amber); }
+    .section { padding: 0 16px 14px; }
+    .section-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .params { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .param { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .param label { font-size: 11px; color: var(--muted); }
+    .param input { background: transparent; border: none; color: var(--text); font-size: 16px; font-weight: 600; width: 100%; outline: none; -webkit-appearance: none; }
+    .btn-row { display: flex; gap: 8px; padding: 0 16px 14px; }
+    .btn { flex: 1; padding: 14px; border-radius: var(--radius); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(0.97); }
+    .btn-start { background: var(--green); color: #000; }
+    .btn-stop { background: var(--red-dim); color: var(--red); border: 0.5px solid var(--red); }
+    .btn-notify { background: var(--blue-dim); color: var(--blue); border: 0.5px solid rgba(79,142,247,0.3); flex: 0 0 auto; padding: 14px 16px; font-size: 16px; }
+    .btn-notify.granted { background: var(--green-dim); color: var(--green); border-color: rgba(34,199,122,0.3); }
+    .divider { height: 0.5px; background: var(--border); margin: 0 16px 14px; }
+    .alerts-wrap { padding: 0 16px; }
+    .alerts-list { display: flex; flex-direction: column; gap: 8px; max-height: 45vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+    .alert-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease; border-left: 3px solid var(--green); }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+    .alert-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--green-dim); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .alert-body { flex: 1; min-width: 0; }
+    .alert-coin { font-size: 14px; font-weight: 700; }
+    .alert-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .alert-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    .empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .empty-icon { font-size: 32px; margin-bottom: 10px; }
+    .coins-section { padding: 10px 16px 14px; }
+    .coins-grid { display: flex; flex-wrap: wrap; gap: 5px; max-height: 120px; overflow-y: auto; }
+    .chip { font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 20px; border: 0.5px solid var(--border); color: var(--muted); background: var(--surface); transition: all 0.2s; }
+    .chip.bull { color: var(--green); background: var(--green-dim); border-color: rgba(34,199,122,0.25); }
+    .chip.touch { color: #000; background: var(--green); border-color: var(--green); animation: pop 0.4s ease; }
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+    .progress-bar { height: 2px; background: var(--surface2); border-radius: 2px; margin: 0 16px 14px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); border-radius: 2px; width: 0%; transition: width 0.3s; }
+    .log-section { padding: 0 16px 20px; }
+    .log-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; max-height: 70px; overflow-y: auto; }
+    .log-line { font-size: 11px; color: var(--muted); font-family: 'SF Mono', monospace; line-height: 1.7; }
+    .log-line.hi { color: var(--green); }
+    .scan-info { font-size: 11px; color: var(--muted); text-align: right; padding: 0 16px 8px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1>BB Scanner</h1>
+      <p id="subtitle">Bybit · 15m · Bollinger Middle</p>
+    </div>
+    <div class="hright">
+      <div class="status-dot" id="dot"></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="st-total">0</div><div class="stat-label">Монет</div></div>
+    <div class="stat"><div class="stat-val green" id="st-bull">0</div><div class="stat-label">Бычьих</div></div>
+    <div class="stat"><div class="stat-val amber" id="st-alerts">0</div><div class="stat-label">Алертов</div></div>
+    <div class="stat"><div class="stat-val" id="st-scan" style="font-size:13px;padding-top:4px;">—</div><div class="stat-label">Скан</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Параметры</div>
+    <div class="params">
+      <div class="param"><label>Период BB</label><input type="number" id="p-bb" value="20" inputmode="numeric"></div>
+      <div class="param"><label>Откл. σ</label><input type="number" id="p-std" value="2" step="0.5" inputmode="decimal"></div>
+      <div class="param"><label>EMA тренд</label><input type="number" id="p-ema" value="50" inputmode="numeric"></div>
+      <div class="param"><label>Порог касания %</label><input type="number" id="p-touch" value="0.3" step="0.05" inputmode="decimal"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-start" id="main-btn" onclick="toggleScanner()">▶ Запустить</button>
+    <button class="btn btn-notify" id="notif-btn" onclick="requestNotify()">🔔</button>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <div class="divider"></div>
+
+  <div class="alerts-wrap">
+    <div class="section-title" style="padding:0 0 10px;">Алерты</div>
+    <div class="alerts-list" id="alerts-list">
+      <div class="empty"><div class="empty-icon">📡</div>Нажми «Запустить» — сканнер проверит монеты и покажет касания средней BB</div>
+    </div>
+  </div>
+
+  <div class="divider" style="margin-top:10px;"></div>
+
+  <div class="coins-section">
+    <div class="section-title" style="margin-bottom:8px;">Состояние монет</div>
+    <div class="coins-grid" id="coins-grid"></div>
+  </div>
+
+  <div class="scan-info" id="scan-info"></div>
+
+  <div class="log-section">
+    <div class="log-box" id="log-box"></div>
+  </div>
+</div>
+
+<script>
+// Top-80 Bybit USDT spot pairs by volume
+const COINS = [
+  'BTCUSDT','ETHUSDT','SOLUSDT','XRPUSDT','BNBUSDT','DOGEUSDT','ADAUSDT','TRXUSDT',
+  'AVAXUSDT','LINKUSDT','DOTUSDT','MATICUSDT','LTCUSDT','SHIBUSDT','UNIUSDT','ATOMUSDT',
+  'ETCUSDT','XLMUSDT','NEARUSDT','ALGOUSDT','FILUSDT','ICPUSDT','APTUSDT','ARBUSDT',
+  'OPUSDT','INJUSDT','RUNEUSDT','SUIUSDT','SEIUSDT','TIAUSDT','WIFUSDT','JUPUSDT',
+  'PENDLEUSDT','PYTHUSDT','STXUSDT','AAVEUSDT','MKRUSDT','LDOUSDT','SNXUSDT','CRVUSDT',
+  'COMPUSDT','YFIUSDT','GRTUSDT','FTMUSDT','SANDUSDT','MANAUSDT','AXSUSDT','APEUSDT',
+  'GMTUSDT','FLOWUSDT','CHZUSDT','GALAUSDT','IMXUSDT','LOOMUSDT','RLCUSDT','SKLUSDT',
+  'COTIUSDT','IOTAUSDT','KAVAUSDT','ONEUSDT','ZILUSDT','HBARUSDT','VETUSDT','XTZUSDT',
+  'EOSUSDT','ARUSDT','QNTUSDT','EGLDUSDT','TUSDT','XMRUSDT','DASHUSDT','ZECUSDT',
+  'WAVESUSDT','ONTUSDT','NEOUSDT','IOSTUSDT','FETUSDT','RENDERUSDT','WLDUSDT','TONUSDT'
+];
+
+let running = false;
+let timer = null;
+let alertCount = 0;
+let prevTouching = new Set();
+let scanBatch = 0;
+
+function log(msg, hi = false) {
+  const t = new Date().toLocaleTimeString('ru-RU');
+  const line = document.createElement('div');
+  line.className = 'log-line' + (hi ? ' hi' : '');
+  line.textContent = `[${t}] ${msg}`;
+  const box = document.getElementById('log-box');
+  box.insertBefore(line, box.firstChild);
+  while (box.children.length > 25) box.removeChild(box.lastChild);
+}
+
+// Bybit V5 API — klines
+async function fetchKlines(symbol) {
+  const url = `https://api.bybit.com/v5/market/kline?category=spot&symbol=${symbol}&interval=15&limit=70`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(r.status);
+  const data = await r.json();
+  if (data.retCode !== 0) throw new Error(data.retMsg);
+  // Bybit returns newest first → reverse
+  return data.result.list.reverse().map(c => parseFloat(c[4]));
+}
+
+function calcEMA(closes, period) {
+  if (closes.length < period) return null;
+  const k = 2 / (period + 1);
+  let ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  for (let i = period; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
+  return ema;
+}
+
+function calcBB(closes, period, std) {
+  if (closes.length < period) return null;
+  const sl = closes.slice(-period);
+  const sma = sl.reduce((a, b) => a + b, 0) / period;
+  const sigma = Math.sqrt(sl.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period);
+  return { upper: sma + std * sigma, middle: sma, lower: sma - std * sigma };
+}
+
+async function scanCoin(symbol) {
+  try {
+    const closes = await fetchKlines(symbol);
+    if (!closes || closes.length < 55) return null;
+    const period = +document.getElementById('p-bb').value || 20;
+    const std = +document.getElementById('p-std').value || 2;
+    const emaPer = +document.getElementById('p-ema').value || 50;
+    const touchPct = +document.getElementById('p-touch').value || 0.3;
+    const bb = calcBB(closes, period, std);
+    const ema = calcEMA(closes, emaPer);
+    if (!bb || !ema) return null;
+    const price = closes[closes.length - 1];
+    const recent = closes.slice(-10);
+    const bull = price > ema && recent[recent.length - 1] > recent[0];
+    const touch = Math.abs(price - bb.middle) / bb.middle * 100 <= touchPct;
+    return { symbol, price, bb, bull, touch };
+  } catch (e) {
+    return null;
+  }
+}
+
+function addAlert(symbol, price, middle) {
+  const list = document.getElementById('alerts-list');
+  const empty = list.querySelector('.empty');
+  if (empty) empty.remove();
+  const t = new Date().toLocaleTimeString('ru-RU');
+  const card = document.createElement('div');
+  card.className = 'alert-card';
+  const name = symbol.replace('USDT', '');
+  const pct = ((price - middle) / middle * 100).toFixed(3);
+  card.innerHTML = `
+    <div class="alert-icon">📊</div>
+    <div class="alert-body">
+      <div class="alert-coin">${name}/USDT</div>
+      <div class="alert-detail">Цена ${price.toPrecision(6)} · BB средняя ${middle.toPrecision(6)} · Δ ${pct}%</div>
+    </div>
+    <div class="alert-time">${t}</div>`;
+  list.insertBefore(card, list.firstChild);
+  while (list.children.length > 40) list.removeChild(list.lastChild);
+  alertCount++;
+  document.getElementById('st-alerts').textContent = alertCount;
+  if (Notification.permission === 'granted') {
+    const n = new Notification(`📊 ${name} — касание BB`, {
+      body: `Бычий тренд ✓  Цена: ${price.toPrecision(6)}`,
+      icon: '/icon-192.svg', badge: '/icon-192.svg', tag: symbol, renotify: true
+    });
+    setTimeout(() => n.close(), 8000);
+  }
+}
+
+function updateGrid(results) {
+  const grid = document.getElementById('coins-grid');
+  grid.innerHTML = '';
+  let bull = 0, total = 0;
+  results.forEach(r => {
+    if (!r) return;
+    total++;
+    const chip = document.createElement('span');
+    chip.className = 'chip' + (r.touch ? ' touch' : r.bull ? ' bull' : '');
+    chip.textContent = r.symbol.replace('USDT', '');
+    chip.title = `${r.price.toPrecision(6)} | BB mid: ${r.bb.middle.toPrecision(6)}`;
+    grid.appendChild(chip);
+    if (r.bull) bull++;
+  });
+  document.getElementById('st-bull').textContent = bull;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-scan').textContent = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+}
+
+// Batch scan with progress to avoid rate limits
+async function runScan() {
+  scanBatch++;
+  log(`Скан #${scanBatch} — ${COINS.length} монет...`);
+  const BATCH = 10;
+  const allResults = [];
+  for (let i = 0; i < COINS.length; i += BATCH) {
+    if (!running) break;
+    const batch = COINS.slice(i, i + BATCH);
+    const res = await Promise.all(batch.map(scanCoin));
+    allResults.push(...res);
+    const pct = Math.round((i + BATCH) / COINS.length * 100);
+    document.getElementById('progress').style.width = Math.min(pct, 100) + '%';
+    document.getElementById('scan-info').textContent = `Проверено ${Math.min(i+BATCH, COINS.length)} / ${COINS.length}`;
+    if (i + BATCH < COINS.length) await new Promise(r => setTimeout(r, 300));
+  }
+  document.getElementById('progress').style.width = '0%';
+  updateGrid(allResults);
+
+  let newAlerts = 0;
+  allResults.forEach(r => {
+    if (!r) return;
+    if (r.bull && r.touch) {
+      if (!prevTouching.has(r.symbol)) {
+        addAlert(r.symbol, r.price, r.bb.middle);
+        log(`⚡ АЛЕРТ: ${r.symbol.replace('USDT','')} касание BB`, true);
+        prevTouching.add(r.symbol);
+        newAlerts++;
+      }
+    } else {
+      prevTouching.delete(r.symbol);
+    }
+  });
+
+  const bullCount = allResults.filter(r => r && r.bull).length;
+  log(`Готово: ${allResults.filter(Boolean).length} ок, бычьих ${bullCount}, алертов ${newAlerts}`);
+}
+
+function toggleScanner() {
+  if (!running) {
+    running = true;
+    document.getElementById('dot').classList.add('active');
+    document.getElementById('main-btn').textContent = '⏹ Остановить';
+    document.getElementById('main-btn').className = 'btn btn-stop';
+    log('Сканнер запущен · Bybit spot 15m');
+    runScan();
+    timer = setInterval(runScan, 90000); // 90s interval — bybit rate limit friendly
+  } else {
+    running = false;
+    clearInterval(timer);
+    document.getElementById('dot').classList.remove('active');
+    document.getElementById('main-btn').textContent = '▶ Запустить';
+    document.getElementById('main-btn').className = 'btn btn-start';
+    document.getElementById('progress').style.width = '0%';
+    log('Сканнер остановлен');
+  }
+}
+
+async function requestNotify() {
+  if (!('Notification' in window)) { alert('Уведомления не поддерживаются'); return; }
+  const perm = await Notification.requestPermission();
+  const btn = document.getElementById('notif-btn');
+  if (perm === 'granted') {
+    btn.textContent = '✅'; btn.className = 'btn btn-notify granted';
+    new Notification('BB Scanner', { body: 'Уведомления включены!', icon: '/icon-192.svg' });
+  } else { btn.textContent = '🔕'; }
+}
+
+if ('Notification' in window && Notification.permission === 'granted') {
+  document.getElementById('notif-btn').textContent = '✅';
+  document.getElementById('notif-btn').className = 'btn btn-notify granted';
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+</script>
+</body>
+</html>
